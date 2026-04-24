@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1073604516508",
+    "project_id": "solucionaya-mvp",
+    "storage_bucket": "solucionaya-mvp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1073604516508:android:5e05e65333a1ce5ad62b59",
+        "android_client_info": {
+          "package_name": "com.solucionaya.solucionaya"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1G2N_2AXsQwTRhrfht24qDjhYYmEqhW0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
