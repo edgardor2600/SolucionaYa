@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../core/constants/app_routes.dart';
 
-/// Pantalla inicial: detecta si el usuario ya tiene sesión activa
-/// y redirige a /home o /login.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -40,9 +39,9 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      context.go('/home');
+      context.go(AppRoutes.clientHome);
     } else {
-      context.go('/login');
+      context.go(AppRoutes.loginEmail);
     }
   }
 
@@ -73,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen>
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
+                        color: Colors.black.withValues(alpha: 0.2),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -86,7 +85,7 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text(
+                const Text(
                   'SolucionaYa',
                   style: TextStyle(
                     color: Colors.white,
@@ -99,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen>
                 Text(
                   'Servicios a domicilio al instante',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 14,
                   ),
                 ),

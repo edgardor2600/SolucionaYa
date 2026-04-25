@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/providers/auth_provider.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _isLoading = false;
@@ -20,12 +20,12 @@ class _LoginScreenState extends State<LoginScreen> {
     
     setState(() => _isLoading = true);
     try {
-      await context.read<AuthProvider>().loginWithEmail(
+      await ref.read(authProvider).loginWithEmail(
             email: _emailCtrl.text,
             password: _passCtrl.text,
           );
       if (!mounted) return;
-      context.go('/home');
+      context.go('/client/home');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -82,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 16),
               TextButton(
-                onPressed: () => context.push('/register'),
+                onPressed: () => context.push('/register/phone'),
                 child: const Text('¿No tienes cuenta? Regístrate aquí'),
               ),
             ],

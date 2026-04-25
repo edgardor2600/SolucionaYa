@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import '../../../app/providers/auth_provider.dart';
+import '../../../core/constants/app_routes.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final user = context.watch<AuthProvider>().currentUser;
-
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('SolucionaYa'),
@@ -17,44 +16,18 @@ class HomeScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await context.read<AuthProvider>().signOut();
-              if (context.mounted) {
-                context.go('/login');
-              }
+              await ref.read(authProvider).signOut();
+              if (!context.mounted) return;
+              context.go(AppRoutes.loginEmail);
             },
           ),
         ],
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.check_circle, size: 80, color: Colors.green),
-            const SizedBox(height: 24),
-            Text(
-              '¡Estás conectado!',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Usuario: ${user?.email ?? "Desconocido"}',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 32),
-            const Text(
-              'Aquí irá el listado de servicios MVP',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
+        child: Text(
+          'Bienvenido a la pantalla principal',
+          style: Theme.of(context).textTheme.titleLarge,
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Acción de pedir servicio (Próximamente)')),
-          );
-        },
-        child: const Icon(Icons.add),
       ),
     );
   }

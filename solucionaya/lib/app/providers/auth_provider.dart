@@ -1,5 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final authProvider = ChangeNotifierProvider<AuthProvider>((ref) {
+  return AuthProvider();
+});
 
 /// Estado de autenticación de la app.
 class AuthProvider extends ChangeNotifier {
