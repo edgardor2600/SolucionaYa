@@ -24,20 +24,22 @@ Future<void> main() async {
       await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
       FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
       await FirebaseStorage.instance.useStorageEmulator('localhost', 9199);
+      // ignore: avoid_print
       print('✅ Conectado a Firebase Emulator Suite');
     } catch (e) {
-      print('⚠️ Error conectando a emuladores (probablemente ya conectados): $e');
+      // ignore: avoid_print
+      print('⚠️ Emuladores ya conectados o error: $e');
     }
   }
 
-  // ── Configurar Crashlytics ────────────────────────────────────
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-
-  // Captura errores asincrónicos fuera del árbol de widgets
-  PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true;
-  };
+  // ── Configurar Crashlytics (no disponible en Web) ─────────────
+  if (!kIsWeb) {
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+  }
 
   // ── Arrancar la app envuelta en ProviderScope (Riverpod) ─────
   runApp(
@@ -46,3 +48,4 @@ Future<void> main() async {
     ),
   );
 }
+
