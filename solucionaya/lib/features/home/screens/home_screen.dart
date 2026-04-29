@@ -9,6 +9,8 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('SolucionaYa'),
@@ -23,10 +25,60 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Text(
-          'Bienvenido a la pantalla principal',
-          style: Theme.of(context).textTheme.titleLarge,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Prueba de Componentes (Día 3)',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            
+            // Prueba de campos de texto
+            TextField(
+              decoration: const InputDecoration(
+                labelText: 'Campo de prueba',
+                prefixIcon: Icon(Icons.person_outline),
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Prueba de botones (elevated y outlined)
+            ElevatedButton(
+              onPressed: () {},
+              child: const Text('Botón Primario'),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: () {},
+              child: const Text('Botón Secundario'),
+            ),
+            const SizedBox(height: 32),
+            
+            // Prueba de Card y sombras
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    const Icon(Icons.check_circle, color: Colors.green, size: 48),
+                    const SizedBox(height: 8),
+                    Text(
+                      '¡Tema global configurado!',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
