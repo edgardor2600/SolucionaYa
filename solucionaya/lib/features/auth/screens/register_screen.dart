@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../app/providers/auth_provider.dart';
 import '../../../core/constants/app_routes.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -18,12 +19,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (_phoneCtrl.text.isEmpty) return;
     setState(() => _isLoading = true);
     
-    // Simular retraso de red
-    await Future.delayed(const Duration(seconds: 1));
-    
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    context.go(AppRoutes.clientHome);
+    try {
+      // Usamos un correo ficticio basado en el teléfono solo para probar el emulador
+      final testEmail = '${_phoneCtrl.text}@solucionaya.com';
+      await ref.read(authProvider).registerWithEmail(
+            email: testEmail,
+            password: 'password123',
+          );
+      
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('¡Usuario creado en el Emulador local!')),
+      );
+      context.go(AppRoutes.clientHome);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
