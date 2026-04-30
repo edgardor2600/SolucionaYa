@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/providers/auth_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/worker_profile_model.dart';
-import '../../../data/models/service_models.dart';
 
 class ClientHomeScreen extends ConsumerWidget {
   const ClientHomeScreen({super.key});

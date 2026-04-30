@@ -1,9 +1,119 @@
 rules_version = '2';
 
+// ─── SolucionaYa — Firestore Security Rules ───────────────────────────────────
+// Principio: mínimo privilegio. Cada colección define quién puede leer y escribir.
+// Roles: client | worker | admin  (almacenados en /users/{uid}.role)
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ── Funciones de ayuda ───────────────────────────────────────────────────
+
+    /// Verifica que el usuario tenga una sesión válida.
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    /// Verifica que el usuario actúa sobre su propio documento.
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    /// Lee el rol del usuario desde Firestore (campo 'role').
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    /// ¿Es administrador?
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'admin';
+    }
+
+    /// ¿Es trabajador?
+    function isWorker() {
+      return isAuthenticated() && getUserRole() == 'worker';
+    }
+
+    /// ¿Es cliente?
+    function isClient() {
+      return isAuthenticated() && getUserRole() == 'client';
+    }
+
+    // ── /users/{uid} ─────────────────────────────────────────────────────────
+    // Un usuario solo puede leer/editar su propio perfil.
+    // Admins pueden leer cualquier perfil.
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasAll(['uid','role','displayName','phone','city','createdAt','lastActiveAt','isActive','fcmTokens'])
+        && request.resource.data.role in ['client', 'worker'];
+      allow update: if (isOwner(uid) || isAdmin())
+        // Protección: el rol y uid NO pueden modificarse por el usuario
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['uid', 'role']) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // ── /workers/{uid} ───────────────────────────────────────────────────────
+    // Perfiles públicos de trabajadores.
+    // Cualquier usuario autenticado puede leer perfiles aprobados.
+    // Solo el propio trabajador puede editar su perfil (Admin puede todo).
+    match /workers/{uid} {
+      // Leer: autenticado + perfil aprobado, O el propio trabajador, O admin
+      allow read: if (isAuthenticated() && resource.data.isApproved == true)
+                  || isOwner(uid)
+                  || isAdmin();
+      allow create: if isOwner(uid) && isWorker();
+      allow update: if (isOwner(uid) && isWorker())
+        // Campos sensibles que solo el admin puede cambiar
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['isVerified', 'isApproved', 'rating', 'totalReviews', 'totalJobsDone'])
+        || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── /reviews/{reviewId} ──────────────────────────────────────────────────
+    // Las reseñas son públicas para leer; solo el cliente que la creó puede crearla.
+    match /reviews/{reviewId} {
+      allow read: if isAuthenticated();
+      allow create: if isClient()
+        && request.resource.data.clientId == request.auth.uid
+        && request.resource.data.keys().hasAll(['workerId','clientId','rating','comment','createdAt']);
+      allow update: if isAdmin()
+        // Solo el trabajador puede añadir su réplica
+        || (isWorker() && request.auth.uid == resource.data.workerId
+            && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['workerReply', 'workerReplyAt']));
+      allow delete: if isAdmin();
+    }
+
+    // ── /chats/{chatId} ──────────────────────────────────────────────────────
+    match /chats/{chatId} {
+      allow read, write: if isAuthenticated()
+        && (request.auth.uid == resource.data.clientId
+            || request.auth.uid == resource.data.workerId);
+
+      // Mensajes dentro del chat
+      match /messages/{messageId} {
+        allow read: if isAuthenticated()
+          && (request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.clientId
+              || request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.workerId);
+        allow create: if isAuthenticated()
+          && request.resource.data.senderUid == request.auth.uid;
+        allow update, delete: if false; // Los mensajes son inmutables
+      }
+    }
+
+    // ── /reports/{reportId} ──────────────────────────────────────────────────
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated()
+        && request.resource.data.reporterUid == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Regla de cierre: bloquear todo lo no declarado ───────────────────────
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

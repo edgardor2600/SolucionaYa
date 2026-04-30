@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../data/models/service_models.dart';
-import '../../../data/models/worker_profile_model.dart';
 
 /// Pantalla completa del perfil público de un trabajador.
 /// Inspirada en Airbnb / Thumbtack: foto hero, pestañas, info rica.
