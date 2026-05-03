@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:go_router/go_router.dart';
+
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_routes.dart';
 import '../../../data/models/worker_profile_model.dart';
+import '../../../app/providers/auth_provider.dart';
+import '../../../app/providers/categories_provider.dart';
 
 class ClientHomeScreen extends ConsumerWidget {
   const ClientHomeScreen({super.key});
@@ -34,7 +39,7 @@ class ClientHomeScreen extends ConsumerWidget {
                 const SizedBox(height: 28),
                 _buildSectionTitle(context, 'Categorías', onTap: () {}),
                 const SizedBox(height: 16),
-                _buildCategoriesGrid(context),
+                _buildCategoriesGrid(context, ref),
                 const SizedBox(height: 28),
                 _buildSectionTitle(context, 'Destacados cerca de ti', onTap: () {}),
                 const SizedBox(height: 16),
@@ -101,11 +106,48 @@ class ClientHomeScreen extends ConsumerWidget {
         ),
         Padding(
           padding: const EdgeInsets.only(right: 12),
-          child: CircleAvatar(
-            radius: 18,
-            backgroundColor: theme.colorScheme.primaryContainer,
-            child: Icon(Icons.person_outline_rounded,
-                color: theme.colorScheme.primary, size: 20),
+          child: PopupMenuButton<String>(
+            offset: const Offset(0, 45),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 8,
+            onSelected: (value) async {
+              if (value == 'logout') {
+                await ref.read(authProvider).signOut();
+                if (context.mounted) {
+                  context.go(AppRoutes.loginEmail);
+                }
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'profile',
+                child: Row(
+                  children: [
+                    Icon(Icons.person_outline_rounded, color: theme.colorScheme.primary, size: 20),
+                    const SizedBox(width: 12),
+                    const Text('Mi Perfil'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout_rounded, color: theme.colorScheme.error, size: 20),
+                    const SizedBox(width: 12),
+                    Text('Cerrar Sesión', style: TextStyle(color: theme.colorScheme.error)),
+                  ],
+                ),
+              ),
+            ],
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: theme.colorScheme.primaryContainer,
+              child: Icon(Icons.person_outline_rounded,
+                  color: theme.colorScheme.primary, size: 20),
+            ),
           ),
         ),
       ],
@@ -272,48 +314,74 @@ class ClientHomeScreen extends ConsumerWidget {
 
   // ─── Categories Grid ────────────────────────────────────────────────────────
 
-  Widget _buildCategoriesGrid(BuildContext context) {
-    final cats = ServiceCategory.values.toList();
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.zero,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 10,
-        childAspectRatio: 0.78,
+  Widget _buildCategoriesGrid(BuildContext context, WidgetRef ref) {
+    final categoriesAsync = ref.watch(categoriesProvider);
+
+    return categoriesAsync.when(
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: CircularProgressIndicator(),
+        ),
       ),
-      itemCount: cats.length,
-      itemBuilder: (context, i) {
-        final cat = cats[i];
-        return GestureDetector(
-          onTap: () {},
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                height: 56,
-                width: 56,
-                decoration: BoxDecoration(
-                  color: cat.color.withAlpha(22),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(cat.icon, color: cat.color, size: 26),
-              ),
-              const SizedBox(height: 7),
-              Text(
-                cat.label,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
-                    ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+      error: (error, stack) => Center(
+        child: Text(
+          'Error al cargar categorías',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+      ),
+      data: (categories) {
+        if (categories.isEmpty) {
+          return const Center(child: Text('No hay categorías disponibles'));
+        }
+        
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 10,
+            childAspectRatio: 0.78,
           ),
+          itemCount: categories.length,
+          itemBuilder: (context, i) {
+            final cat = categories[i];
+            // Buscamos el icono y color original usando el enum ServiceCategory como mapa
+            final serviceCat = ServiceCategory.fromString(cat.categoryId);
+            
+            return GestureDetector(
+              onTap: () {
+                context.push(AppRoutes.clientExplore, extra: cat);
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    height: 56,
+                    width: 56,
+                    decoration: BoxDecoration(
+                      color: serviceCat.color.withAlpha(22),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(serviceCat.icon, color: serviceCat.color, size: 26),
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    cat.name, // El nombre viene de Firestore
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          height: 1.2,
+                        ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );

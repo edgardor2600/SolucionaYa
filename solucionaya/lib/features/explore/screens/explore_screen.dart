@@ -1,21 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/providers/categories_provider.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/category_model.dart';
 import '../../../data/models/worker_profile_model.dart';
 import '../../worker_profile/screens/worker_profile_detail_screen.dart';
 
-class ExploreScreen extends StatefulWidget {
-  const ExploreScreen({super.key});
+class ExploreScreen extends ConsumerStatefulWidget {
+  const ExploreScreen({super.key, this.initialCategory});
+  final CategoryModel? initialCategory;
 
   @override
-  State<ExploreScreen> createState() => _ExploreScreenState();
+  ConsumerState<ExploreScreen> createState() => _ExploreScreenState();
 }
 
-class _ExploreScreenState extends State<ExploreScreen> {
-  ServiceCategory? _selectedCategory;
+class _ExploreScreenState extends ConsumerState<ExploreScreen> {
+  CategoryModel? _selectedCategory;
   String _sortBy = 'rating'; // 'rating' | 'price' | 'distance'
   bool _verifiedOnly = false;
   bool _availableNow = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategory = widget.initialCategory;
+  }
+
+  @override
+  void didUpdateWidget(ExploreScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialCategory != oldWidget.initialCategory) {
+      setState(() {
+        _selectedCategory = widget.initialCategory;
+      });
+    }
+  }
 
   static const _mockResults = [
     (name: 'Carlos Medina', trade: 'Plomería', rating: 4.9, price: 50000, verified: true, available: true, color: AppColors.plomeria, jobs: 138),
@@ -35,7 +55,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       if (_verifiedOnly && !w.verified) return false;
       if (_availableNow && !w.available) return false;
       if (_selectedCategory != null &&
-          w.trade != _selectedCategory!.label) return false;
+          w.trade != _selectedCategory!.name) return false;
       return true;
     }).toList();
 
@@ -154,6 +174,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Widget _buildCategoryChips(BuildContext context) {
     final theme = Theme.of(context);
+    final categoriesAsync = ref.watch(categoriesProvider);
+
     return SizedBox(
       height: 44,
       child: ListView(
@@ -172,21 +194,37 @@ class _ExploreScreenState extends State<ExploreScreen> {
               checkmarkColor: theme.colorScheme.primary,
             ),
           ),
-          ...ServiceCategory.values.map((cat) => Padding(
+          ...categoriesAsync.when(
+            data: (categories) => categories.map((cat) {
+              final serviceCat = ServiceCategory.fromString(cat.categoryId);
+              return Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: FilterChip(
                   avatar:
-                      Icon(cat.icon, size: 14, color: cat.color),
-                  label: Text(cat.label),
+                      Icon(serviceCat.icon, size: 14, color: serviceCat.color),
+                  label: Text(cat.name),
                   selected: _selectedCategory == cat,
                   onSelected: (_) => setState(() {
                     _selectedCategory =
                         _selectedCategory == cat ? null : cat;
                   }),
-                  selectedColor: cat.color.withAlpha(30),
-                  checkmarkColor: cat.color,
+                  selectedColor: serviceCat.color.withAlpha(30),
+                  checkmarkColor: serviceCat.color,
                 ),
-              )),
+              );
+            }),
+            loading: () => [
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            ],
+            error: (_, __) => [],
+          ),
         ],
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../app/providers/auth_provider.dart';
 import '../../../core/constants/app_routes.dart';
@@ -54,115 +55,254 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isLoading = ref.watch(authProvider).isLoading;
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── Logo / Hero ───────────────────────────────────────
-                const SizedBox(height: 32),
-                Container(
-                  height: 80,
-                  width: 80,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Icon(Icons.handyman_rounded,
-                      size: 44, color: Colors.white),
-                ),
-                const SizedBox(height: 28),
-                Text(
-                  'Bienvenido de nuevo',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Inicia sesión para acceder a tu cuenta.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Stack(
+        children: [
+          // ── Fondo decorativo animado ──
+          Positioned(
+            top: -150,
+            left: -50,
+            child: Container(
+              width: 350,
+              height: 350,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary.withValues(alpha: 0.08),
+              ),
+            ).animate().scale(duration: 800.ms, curve: Curves.easeOutCubic),
+          ),
+          Positioned(
+            top: 100,
+            right: -100,
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.secondary.withValues(alpha: 0.06),
+              ),
+            ).animate().scale(duration: 900.ms, curve: Curves.easeOutCubic, delay: 200.ms),
+          ),
+          
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // ── Logo / Hero ──
+                      Center(
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              height: 100,
+                              width: 100,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                            ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+                            Container(
+                              height: 72,
+                              width: 72,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary.withValues(alpha: 0.3),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(Icons.handyman_rounded, size: 36, color: Colors.white),
+                            ).animate().scale(delay: 200.ms, duration: 500.ms, curve: Curves.elasticOut),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      
+                      // ── Textos ──
+                      Text(
+                        '¡Hola de nuevo!',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                          color: colorScheme.onSurface,
+                        ),
+                      ).animate().slideY(begin: 0.3, duration: 500.ms).fade(),
+                      
+                      const SizedBox(height: 8),
+                      
+                      Text(
+                        'Inicia sesión para continuar.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ).animate().slideY(begin: 0.3, duration: 500.ms, delay: 100.ms).fade(),
 
-                // ── Formulario ────────────────────────────────────────
-                const SizedBox(height: 40),
-                TextFormField(
-                  controller: _emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    labelText: 'Correo electrónico',
-                    prefixIcon: Icon(Icons.email_outlined),
-                  ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'Por favor ingresa tu correo.';
-                    }
-                    if (!v.contains('@')) {
-                      return 'Ingresa un correo válido.';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passCtrl,
-                  obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _login(),
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined),
-                      onPressed: () => setState(
-                          () => _obscurePassword = !_obscurePassword),
-                    ),
-                  ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) {
-                      return 'Por favor ingresa tu contraseña.';
-                    }
-                    if (v.length < 6) {
-                      return 'La contraseña debe tener al menos 6 caracteres.';
-                    }
-                    return null;
-                  },
-                ),
+                      const SizedBox(height: 48),
 
-                // ── CTA ───────────────────────────────────────────────
-                const SizedBox(height: 32),
-                FilledButton(
-                  onPressed: isLoading ? null : _login,
-                  child: isLoading
-                      ? const SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2.5),
-                        )
-                      : const Text('Iniciar Sesión'),
+                      // ── Formulario ──
+                      TextFormField(
+                        controller: _emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                        decoration: InputDecoration(
+                          labelText: 'Correo electrónico',
+                          prefixIcon: Icon(Icons.email_outlined, color: colorScheme.primary),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) {
+                            return 'Por favor ingresa tu correo.';
+                          }
+                          if (!v.contains('@')) {
+                            return 'Ingresa un correo válido.';
+                          }
+                          return null;
+                        },
+                      ).animate().slideY(begin: 0.2, duration: 500.ms, delay: 200.ms).fade(),
+                      
+                      const SizedBox(height: 20),
+                      
+                      TextFormField(
+                        controller: _passCtrl,
+                        obscureText: _obscurePassword,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _login(),
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                        decoration: InputDecoration(
+                          labelText: 'Contraseña',
+                          prefixIcon: Icon(Icons.lock_outline_rounded, color: colorScheme.primary),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                              color: colorScheme.onSurface.withValues(alpha: 0.5),
+                            ),
+                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                          ),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) {
+                            return 'Por favor ingresa tu contraseña.';
+                          }
+                          if (v.length < 6) {
+                            return 'Mínimo 6 caracteres.';
+                          }
+                          return null;
+                        },
+                      ).animate().slideY(begin: 0.2, duration: 500.ms, delay: 300.ms).fade(),
+
+                      const SizedBox(height: 12),
+                      
+                      // ── ¿Olvidaste tu contraseña? ──
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            // TODO: Implementar recuperación de contraseña
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: colorScheme.onSurface.withValues(alpha: 0.6),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            minimumSize: Size.zero,
+                          ),
+                          child: const Text(
+                            '¿Olvidaste tu contraseña?',
+                            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                          ),
+                        ),
+                      ).animate().fade(delay: 400.ms, duration: 400.ms),
+
+                      // ── CTA ──
+                      const SizedBox(height: 32),
+                      
+                      SizedBox(
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _login,
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 8,
+                            shadowColor: colorScheme.primary.withValues(alpha: 0.4),
+                          ),
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                )
+                              : const Text(
+                                  'Iniciar Sesión',
+                                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                                ),
+                        ),
+                      ).animate().slideY(begin: 0.3, duration: 500.ms, delay: 400.ms).fade(),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // ── Footer ──
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '¿No tienes cuenta?',
+                            style: TextStyle(
+                              color: colorScheme.onSurface.withValues(alpha: 0.6),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => context.push(AppRoutes.registerEmail),
+                            child: const Text(
+                              'Regístrate',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ).animate().fade(delay: 500.ms, duration: 500.ms),
+
+                      const SizedBox(height: 12),
+                      
+                      TextButton.icon(
+                        onPressed: () {
+                          if (context.canPop()) {
+                            context.pop();
+                          } else {
+                            context.go(AppRoutes.registerPhone);
+                          }
+                        },
+                        icon: const Icon(Icons.phone_android_rounded, size: 20),
+                        label: const Text(
+                          'Iniciar con número telefónico',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: colorScheme.onSurface.withValues(alpha: 0.7),
+                        ),
+                      ).animate().fade(delay: 600.ms, duration: 500.ms),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => context.push(AppRoutes.registerPhone),
-                  child: const Text('¿No tienes cuenta? Regístrate aquí'),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
