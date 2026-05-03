@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/models/service_models.dart';
 import '../../data/models/worker_profile_model.dart';
 import '../../data/repositories/worker_repository.dart';
 
@@ -55,8 +56,8 @@ class WorkerFilter {
       other.limit == limit;
 
   @override
-  int get hashCode => Object.hash(
-      category, availableNow, verifiedOnly, sortBy, limit);
+  int get hashCode =>
+      Object.hash(category, availableNow, verifiedOnly, sortBy, limit);
 }
 
 // ─── Filter State Notifier ───────────────────────────────────────────────────
@@ -67,9 +68,10 @@ class WorkerFilterNotifier extends Notifier<WorkerFilter> {
   WorkerFilter build() => const WorkerFilter();
 
   void setCategory(String? category) {
-    state = category == null
-        ? state.copyWith(clearCategory: true)
-        : state.copyWith(category: category);
+    state =
+        category == null
+            ? state.copyWith(clearCategory: true)
+            : state.copyWith(category: category);
   }
 
   void toggleAvailableNow() {
@@ -91,15 +93,16 @@ class WorkerFilterNotifier extends Notifier<WorkerFilter> {
 
 final workerFilterProvider =
     NotifierProvider<WorkerFilterNotifier, WorkerFilter>(
-  WorkerFilterNotifier.new,
-);
+      WorkerFilterNotifier.new,
+    );
 
 // ─── Workers List Provider (FutureProvider) ───────────────────────────────────
 
 /// Carga la lista de trabajadores según los filtros activos.
 /// Se recalcula automáticamente cuando cambia [workerFilterProvider].
-final workersProvider =
-    FutureProvider.autoDispose<List<WorkerProfileModel>>((ref) async {
+final workersProvider = FutureProvider.autoDispose<List<WorkerProfileModel>>((
+  ref,
+) async {
   final filter = ref.watch(workerFilterProvider);
   final repo = ref.watch(workerRepositoryProvider);
 
@@ -115,19 +118,27 @@ final workersProvider =
 // ─── Single Worker Profile Provider ──────────────────────────────────────────
 
 /// Stream en tiempo real del perfil de un trabajador específico.
-final workerProfileProvider =
-    StreamProvider.autoDispose.family<WorkerProfileModel?, String>(
-  (ref, uid) {
-    final repo = ref.watch(workerRepositoryProvider);
-    return repo.watchWorkerProfile(uid);
-  },
-);
+final workerProfileProvider = StreamProvider.autoDispose
+    .family<WorkerProfileModel?, String>((ref, uid) {
+      final repo = ref.watch(workerRepositoryProvider);
+      return repo.watchWorkerProfile(uid);
+    });
 
 /// Lectura de un solo trabajador (sin stream, para uso estático).
-final workerProfileOnceProvider =
-    FutureProvider.autoDispose.family<WorkerProfileModel?, String>(
-  (ref, uid) {
-    final repo = ref.watch(workerRepositoryProvider);
-    return repo.getWorkerProfile(uid);
-  },
-);
+final workerProfileOnceProvider = FutureProvider.autoDispose
+    .family<WorkerProfileModel?, String>((ref, uid) {
+      final repo = ref.watch(workerRepositoryProvider);
+      return repo.getWorkerProfile(uid);
+    });
+
+final workerPricesProvider = FutureProvider.autoDispose
+    .family<List<PriceModel>, String>((ref, uid) {
+      final repo = ref.watch(workerRepositoryProvider);
+      return repo.getPrices(uid);
+    });
+
+final workerGalleryProvider = FutureProvider.autoDispose
+    .family<List<GalleryPhotoModel>, String>((ref, uid) {
+      final repo = ref.watch(workerRepositoryProvider);
+      return repo.getGallery(uid);
+    });
