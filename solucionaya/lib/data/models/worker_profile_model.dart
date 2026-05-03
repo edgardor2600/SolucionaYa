@@ -64,11 +64,7 @@ enum ServiceCategory {
 
 /// Esquema de disponibilidad por día de la semana.
 class DaySchedule {
-  const DaySchedule({
-    required this.isAvailable,
-    this.startTime,
-    this.endTime,
-  });
+  const DaySchedule({required this.isAvailable, this.startTime, this.endTime});
 
   final bool isAvailable;
   final String? startTime; // formato "HH:mm"
@@ -83,14 +79,26 @@ class DaySchedule {
   }
 
   Map<String, dynamic> toJson() => {
-        'isAvailable': isAvailable,
-        if (startTime != null) 'startTime': startTime,
-        if (endTime != null) 'endTime': endTime,
-      };
+    'isAvailable': isAvailable,
+    if (startTime != null) 'startTime': startTime,
+    if (endTime != null) 'endTime': endTime,
+  };
+
+  DaySchedule copyWith({
+    bool? isAvailable,
+    String? startTime,
+    String? endTime,
+  }) {
+    return DaySchedule(
+      isAvailable: isAvailable ?? this.isAvailable,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+    );
+  }
 }
 
 /// Perfil completo de un trabajador.
-/// Almacenado en Firestore bajo /workerProfiles/{uid}
+/// Almacenado en Firestore bajo /workers/{uid}
 class WorkerProfileModel {
   const WorkerProfileModel({
     required this.uid,
@@ -99,6 +107,7 @@ class WorkerProfileModel {
     required this.city,
     required this.createdAt,
     required this.updatedAt,
+    required this.isActive,
     required this.isAvailableNow,
     required this.isVerified,
     required this.isApproved,
@@ -112,6 +121,7 @@ class WorkerProfileModel {
     this.bio,
     this.yearsExperience = 0,
     this.shareableSlug,
+    this.startingPrice,
     this.availableSchedule = const {},
     this.tags = const [],
     this.pendingReason,
@@ -125,6 +135,7 @@ class WorkerProfileModel {
   final String city;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isActive;
   final bool isAvailableNow;
   final bool isVerified;
   final bool isApproved;
@@ -136,6 +147,7 @@ class WorkerProfileModel {
   final int profileCompleteness; // 0-100
   final int yearsExperience;
   final String? shareableSlug;
+  final double? startingPrice; // valor desnormalizado para listados y orden
   final Map<String, DaySchedule> availableSchedule; // key: "monday", "tuesday"…
   final List<String> tags;
   final String? pendingReason; // por qué está pendiente de aprobación
@@ -158,10 +170,12 @@ class WorkerProfileModel {
       photoUrl: json['photoUrl'] as String?,
       bio: json['bio'] as String?,
       category: ServiceCategory.fromString(
-          json['category'] as String? ?? 'plomeria'),
+        json['category'] as String? ?? 'plomeria',
+      ),
       city: json['city'] as String? ?? '',
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
+      isActive: json['isActive'] as bool? ?? true,
       isAvailableNow: json['isAvailableNow'] as bool? ?? false,
       isVerified: json['isVerified'] as bool? ?? false,
       isApproved: json['isApproved'] as bool? ?? false,
@@ -170,10 +184,10 @@ class WorkerProfileModel {
       totalJobsDone: (json['totalJobsDone'] as num?)?.toInt() ?? 0,
       profileViews: (json['profileViews'] as num?)?.toInt() ?? 0,
       responseTimeMinutes: (json['responseTimeMinutes'] as num?)?.toInt() ?? 30,
-      profileCompleteness:
-          (json['profileCompleteness'] as num?)?.toInt() ?? 0,
+      profileCompleteness: (json['profileCompleteness'] as num?)?.toInt() ?? 0,
       yearsExperience: (json['yearsExperience'] as num?)?.toInt() ?? 0,
       shareableSlug: json['shareableSlug'] as String?,
+      startingPrice: (json['startingPrice'] as num?)?.toDouble(),
       availableSchedule: scheduleRaw.map(
         (k, v) => MapEntry(k, DaySchedule.fromJson(v as Map<String, dynamic>)),
       ),
@@ -192,6 +206,7 @@ class WorkerProfileModel {
       'city': city,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+      'isActive': isActive,
       'isAvailableNow': isAvailableNow,
       'isVerified': isVerified,
       'isApproved': isApproved,
@@ -203,8 +218,10 @@ class WorkerProfileModel {
       'profileCompleteness': profileCompleteness,
       'yearsExperience': yearsExperience,
       if (shareableSlug != null) 'shareableSlug': shareableSlug,
-      'availableSchedule':
-          availableSchedule.map((k, v) => MapEntry(k, v.toJson())),
+      if (startingPrice != null) 'startingPrice': startingPrice,
+      'availableSchedule': availableSchedule.map(
+        (k, v) => MapEntry(k, v.toJson()),
+      ),
       'tags': tags,
       if (pendingReason != null) 'pendingReason': pendingReason,
     };
@@ -219,6 +236,7 @@ class WorkerProfileModel {
     String? city,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isActive,
     bool? isAvailableNow,
     bool? isVerified,
     bool? isApproved,
@@ -230,6 +248,7 @@ class WorkerProfileModel {
     int? profileCompleteness,
     int? yearsExperience,
     String? shareableSlug,
+    double? startingPrice,
     Map<String, DaySchedule>? availableSchedule,
     List<String>? tags,
     String? pendingReason,
@@ -243,6 +262,7 @@ class WorkerProfileModel {
       city: city ?? this.city,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isActive: isActive ?? this.isActive,
       isAvailableNow: isAvailableNow ?? this.isAvailableNow,
       isVerified: isVerified ?? this.isVerified,
       isApproved: isApproved ?? this.isApproved,
@@ -254,6 +274,7 @@ class WorkerProfileModel {
       profileCompleteness: profileCompleteness ?? this.profileCompleteness,
       yearsExperience: yearsExperience ?? this.yearsExperience,
       shareableSlug: shareableSlug ?? this.shareableSlug,
+      startingPrice: startingPrice ?? this.startingPrice,
       availableSchedule: availableSchedule ?? this.availableSchedule,
       tags: tags ?? this.tags,
       pendingReason: pendingReason ?? this.pendingReason,

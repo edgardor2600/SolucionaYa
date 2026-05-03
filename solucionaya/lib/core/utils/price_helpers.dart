@@ -1,18 +1,6 @@
+import '../../data/models/worker_profile_model.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
-
-/// Configuración de las 8 categorías de servicio.
-/// Sirve como fuente de verdad para íconos, colores y precios sugeridos.
-enum ServiceCategory {
-  plomeria,
-  electricidad,
-  cerrajeria,
-  aseo,
-  pintura,
-  camaras,
-  computadores,
-  enchape,
-}
 
 /// Extensión con propiedades de cada categoría.
 extension ServiceCategoryX on ServiceCategory {
@@ -44,21 +32,21 @@ extension ServiceCategoryX on ServiceCategory {
   int get colorValue {
     switch (this) {
       case ServiceCategory.plomeria:
-        return AppColors.plomeria.value;
+        return AppColors.plomeria.toARGB32();
       case ServiceCategory.electricidad:
-        return AppColors.electricidad.value;
+        return AppColors.electricidad.toARGB32();
       case ServiceCategory.cerrajeria:
-        return AppColors.cerrajeria.value;
+        return AppColors.cerrajeria.toARGB32();
       case ServiceCategory.aseo:
-        return AppColors.aseo.value;
+        return AppColors.aseo.toARGB32();
       case ServiceCategory.pintura:
-        return AppColors.pintura.value;
+        return AppColors.pintura.toARGB32();
       case ServiceCategory.camaras:
-        return AppColors.camaras.value;
+        return AppColors.camaras.toARGB32();
       case ServiceCategory.computadores:
-        return AppColors.computadores.value;
+        return AppColors.computadores.toARGB32();
       case ServiceCategory.enchape:
-        return AppColors.enchape.value;
+        return AppColors.enchape.toARGB32();
     }
   }
 
@@ -152,6 +140,11 @@ extension ServiceCategoryX on ServiceCategory {
 
   /// Convierte un String (guardado en Firestore) a enum.
   static ServiceCategory? fromKey(String key) {
-    return ServiceCategory.values.where((c) => c.key == key).firstOrNull;
+    for (final category in ServiceCategory.values) {
+      if (category.key == key) {
+        return category;
+      }
+    }
+    return null;
   }
 }

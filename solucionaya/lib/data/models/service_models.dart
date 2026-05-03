@@ -68,16 +68,16 @@ class PriceModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'priceId': priceId,
-        'serviceName': serviceName,
-        'category': category,
-        'unit': unit.name,
-        'priceMin': priceMin,
-        if (priceMax != null) 'priceMax': priceMax,
-        'currency': currency,
-        if (notes != null) 'notes': notes,
-        'isActive': isActive,
-      };
+    'priceId': priceId,
+    'serviceName': serviceName,
+    'category': category,
+    'unit': unit.name,
+    'priceMin': priceMin,
+    if (priceMax != null) 'priceMax': priceMax,
+    'currency': currency,
+    if (notes != null) 'notes': notes,
+    'isActive': isActive,
+  };
 
   PriceModel copyWith({
     String? priceId,
@@ -131,22 +131,43 @@ class GalleryPhotoModel {
       thumbnailUrl: json['thumbnailUrl'] as String?,
       caption: json['caption'] as String?,
       category: json['category'] as String?,
-      uploadedAt: json['uploadedAt'] is Timestamp
-          ? (json['uploadedAt'] as Timestamp).toDate()
-          : DateTime.now(),
+      uploadedAt:
+          json['uploadedAt'] is Timestamp
+              ? (json['uploadedAt'] as Timestamp).toDate()
+              : DateTime.now(),
       order: (json['order'] as num?)?.toInt() ?? 0,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'photoId': photoId,
-        'url': url,
-        if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
-        if (caption != null) 'caption': caption,
-        if (category != null) 'category': category,
-        'uploadedAt': Timestamp.fromDate(uploadedAt),
-        'order': order,
-      };
+    'photoId': photoId,
+    'url': url,
+    if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+    if (caption != null) 'caption': caption,
+    if (category != null) 'category': category,
+    'uploadedAt': Timestamp.fromDate(uploadedAt),
+    'order': order,
+  };
+
+  GalleryPhotoModel copyWith({
+    String? photoId,
+    String? url,
+    String? thumbnailUrl,
+    String? caption,
+    String? category,
+    DateTime? uploadedAt,
+    int? order,
+  }) {
+    return GalleryPhotoModel(
+      photoId: photoId ?? this.photoId,
+      url: url ?? this.url,
+      thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
+      caption: caption ?? this.caption,
+      category: category ?? this.category,
+      uploadedAt: uploadedAt ?? this.uploadedAt,
+      order: order ?? this.order,
+    );
+  }
 }
 
 /// Reseña de un cliente sobre un trabajador.
@@ -184,27 +205,55 @@ class ReviewModel {
       clientPhotoUrl: json['clientPhotoUrl'] as String?,
       rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
       comment: json['comment'] as String? ?? '',
-      createdAt: json['createdAt'] is Timestamp
-          ? (json['createdAt'] as Timestamp).toDate()
-          : DateTime.now(),
+      createdAt:
+          json['createdAt'] is Timestamp
+              ? (json['createdAt'] as Timestamp).toDate()
+              : DateTime.now(),
       workerReply: json['workerReply'] as String?,
-      workerReplyAt: json['workerReplyAt'] != null
-          ? (json['workerReplyAt'] as Timestamp).toDate()
-          : null,
+      workerReplyAt:
+          json['workerReplyAt'] != null
+              ? (json['workerReplyAt'] as Timestamp).toDate()
+              : null,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'reviewId': reviewId,
-        'workerId': workerId,
-        'clientId': clientId,
-        'clientName': clientName,
-        if (clientPhotoUrl != null) 'clientPhotoUrl': clientPhotoUrl,
-        'rating': rating,
-        'comment': comment,
-        'createdAt': Timestamp.fromDate(createdAt),
-        if (workerReply != null) 'workerReply': workerReply,
-        if (workerReplyAt != null)
-          'workerReplyAt': Timestamp.fromDate(workerReplyAt!),
-      };
+    'reviewId': reviewId,
+    'workerId': workerId,
+    'clientId': clientId,
+    'clientName': clientName,
+    if (clientPhotoUrl != null) 'clientPhotoUrl': clientPhotoUrl,
+    'rating': rating,
+    'comment': comment,
+    'createdAt': Timestamp.fromDate(createdAt),
+    if (workerReply != null) 'workerReply': workerReply,
+    if (workerReplyAt != null)
+      'workerReplyAt': Timestamp.fromDate(workerReplyAt!),
+  };
+
+  ReviewModel copyWith({
+    String? reviewId,
+    String? workerId,
+    String? clientId,
+    String? clientName,
+    String? clientPhotoUrl,
+    double? rating,
+    String? comment,
+    DateTime? createdAt,
+    String? workerReply,
+    DateTime? workerReplyAt,
+  }) {
+    return ReviewModel(
+      reviewId: reviewId ?? this.reviewId,
+      workerId: workerId ?? this.workerId,
+      clientId: clientId ?? this.clientId,
+      clientName: clientName ?? this.clientName,
+      clientPhotoUrl: clientPhotoUrl ?? this.clientPhotoUrl,
+      rating: rating ?? this.rating,
+      comment: comment ?? this.comment,
+      createdAt: createdAt ?? this.createdAt,
+      workerReply: workerReply ?? this.workerReply,
+      workerReplyAt: workerReplyAt ?? this.workerReplyAt,
+    );
+  }
 }

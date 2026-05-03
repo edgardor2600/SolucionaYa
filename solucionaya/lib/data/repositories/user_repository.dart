@@ -13,7 +13,10 @@ abstract class UserRepository {
   Future<void> updateUser(String uid, Map<String, dynamic> data);
 
   /// Actualiza o registra un token de notificaciones push (FCM).
-  Future<void> addFcmToken(String uid, String token);
+  Future<void> updateFcmToken(String uid, String token);
+
+  /// Elimina el perfil persistido del usuario.
+  Future<void> deleteUser(String uid);
 
   /// Escucha los cambios en tiempo real de un usuario.
   Stream<UserModel?> watchUser(String uid);
@@ -31,7 +34,7 @@ class UserRepositoryException implements Exception {
 /// Implementación concreta de [UserRepository] usando Cloud Firestore.
 class FirebaseUserRepository implements UserRepository {
   FirebaseUserRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 
@@ -42,7 +45,7 @@ class FirebaseUserRepository implements UserRepository {
     try {
       final doc = await _usersRef.doc(uid).get();
       if (!doc.exists || doc.data() == null) return null;
-      
+
       final data = doc.data() as Map<String, dynamic>;
       // Agregamos el uid al mapa por seguridad si no viene en los datos
       data['uid'] = doc.id;
@@ -68,7 +71,7 @@ class FirebaseUserRepository implements UserRepository {
       // Actualizamos automáticamente el campo de última actividad
       final updatedData = Map<String, dynamic>.from(data);
       updatedData['lastActiveAt'] = FieldValue.serverTimestamp();
-      
+
       await _usersRef.doc(uid).update(updatedData);
     } catch (e) {
       throw UserRepositoryException('Error al actualizar el usuario: $e');
@@ -76,13 +79,26 @@ class FirebaseUserRepository implements UserRepository {
   }
 
   @override
-  Future<void> addFcmToken(String uid, String token) async {
+  Future<void> updateFcmToken(String uid, String token) async {
     try {
       await _usersRef.doc(uid).update({
-        'fcmTokens': FieldValue.arrayUnion([token])
+        'fcmTokens': FieldValue.arrayUnion([token]),
       });
     } catch (e) {
-      throw UserRepositoryException('Error al actualizar el token de notificaciones: $e');
+      throw UserRepositoryException(
+        'Error al actualizar el token de notificaciones: $e',
+      );
+    }
+  }
+
+  @override
+  Future<void> deleteUser(String uid) async {
+    try {
+      await _usersRef.doc(uid).delete();
+    } catch (e) {
+      throw UserRepositoryException(
+        'Error al eliminar el perfil de usuario: $e',
+      );
     }
   }
 
