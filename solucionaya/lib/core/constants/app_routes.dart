@@ -8,6 +8,7 @@ class AppRoutes {
   static const onboarding = '/onboarding';
   static const selectRole = '/select-role';
   static const loginEmail = '/login';
+  static const registerEmail = '/register/email';
   static const registerPhone = '/register/phone';
   static const registerOtp = '/register/otp';
   static const registerProfile = '/register/profile';
