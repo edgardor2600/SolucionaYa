@@ -111,6 +111,13 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // ── /categories/{categoryId} ─────────────────────────────────────────────
+    // Categorías del sistema. Pública lectura.
+    // En desarrollo permitimos escritura para la siembra automática.
+    match /categories/{categoryId} {
+      allow read, write: if true;
+    }
+
     // ── Regla de cierre: bloquear todo lo no declarado ───────────────────────
     match /{document=**} {
       allow read, write: if false;
