@@ -120,6 +120,7 @@ class WorkerProfileModel {
     this.photoUrl,
     this.bio,
     this.yearsExperience = 0,
+    this.whatsappNumber,
     this.shareableSlug,
     this.startingPrice,
     this.availableSchedule = const {},
@@ -146,6 +147,7 @@ class WorkerProfileModel {
   final int responseTimeMinutes;
   final int profileCompleteness; // 0-100
   final int yearsExperience;
+  final String? whatsappNumber; // formato: +573001234567
   final String? shareableSlug;
   final double? startingPrice; // valor desnormalizado para listados y orden
   final Map<String, DaySchedule> availableSchedule; // key: "monday", "tuesday"…
@@ -186,6 +188,7 @@ class WorkerProfileModel {
       responseTimeMinutes: (json['responseTimeMinutes'] as num?)?.toInt() ?? 30,
       profileCompleteness: (json['profileCompleteness'] as num?)?.toInt() ?? 0,
       yearsExperience: (json['yearsExperience'] as num?)?.toInt() ?? 0,
+      whatsappNumber: json['whatsappNumber'] as String?,
       shareableSlug: json['shareableSlug'] as String?,
       startingPrice: (json['startingPrice'] as num?)?.toDouble(),
       availableSchedule: scheduleRaw.map(
@@ -217,6 +220,7 @@ class WorkerProfileModel {
       'responseTimeMinutes': responseTimeMinutes,
       'profileCompleteness': profileCompleteness,
       'yearsExperience': yearsExperience,
+      if (whatsappNumber != null) 'whatsappNumber': whatsappNumber,
       if (shareableSlug != null) 'shareableSlug': shareableSlug,
       if (startingPrice != null) 'startingPrice': startingPrice,
       'availableSchedule': availableSchedule.map(
@@ -247,6 +251,8 @@ class WorkerProfileModel {
     int? responseTimeMinutes,
     int? profileCompleteness,
     int? yearsExperience,
+    String? whatsappNumber,
+    bool clearWhatsapp = false,
     String? shareableSlug,
     double? startingPrice,
     Map<String, DaySchedule>? availableSchedule,
@@ -273,6 +279,7 @@ class WorkerProfileModel {
       responseTimeMinutes: responseTimeMinutes ?? this.responseTimeMinutes,
       profileCompleteness: profileCompleteness ?? this.profileCompleteness,
       yearsExperience: yearsExperience ?? this.yearsExperience,
+      whatsappNumber: clearWhatsapp ? null : (whatsappNumber ?? this.whatsappNumber),
       shareableSlug: shareableSlug ?? this.shareableSlug,
       startingPrice: startingPrice ?? this.startingPrice,
       availableSchedule: availableSchedule ?? this.availableSchedule,

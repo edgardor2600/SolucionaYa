@@ -14,11 +14,14 @@ import '../features/auth/screens/phone_auth_screen.dart';
 import '../features/auth/screens/otp_verification_screen.dart';
 import '../features/auth/screens/complete_profile_screen.dart';
 import '../features/auth/screens/worker_docs_screen.dart';
+import '../features/auth/screens/worker_pending_screen.dart';
 import '../features/auth/screens/onboarding_screen.dart';
 import '../features/explore/screens/explore_screen.dart';
 import '../data/models/category_model.dart';
 import '../features/home/screens/client_home_screen.dart';
 import '../features/home/screens/worker_home_screen.dart';
+import '../features/worker_profile/screens/worker_edit_profile_screen.dart';
+import '../features/worker_profile/screens/worker_prices_screen.dart';
 import '../features/shell/client_shell.dart';
 import '../features/shell/worker_shell.dart';
 import '../features/worker_profile/screens/worker_profile_detail_screen.dart';
@@ -75,8 +78,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.workerPending,
-        builder:
-            (_, __) => const _PlaceholderScreen(label: 'Perfil en revision'),
+        builder: (_, __) => const WorkerPendingScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) => ClientShell(child: child),
@@ -121,6 +123,19 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const _PlaceholderScreen(label: 'Estadisticas'),
           ),
         ],
+      ),
+      // ── Pantallas del trabajador SIN bottom nav (pantallas de detalle/edición) ──
+      GoRoute(
+        path: AppRoutes.workerEditProfile,
+        builder: (_, __) => const WorkerEditProfileScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.workerPrices,
+        builder: (_, __) => const WorkerPricesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.workerGallery,
+        builder: (_, __) => const _PlaceholderScreen(label: 'Mi galería'),
       ),
       GoRoute(
         path: AppRoutes.workerProfileDetail,
@@ -187,6 +202,14 @@ String? _globalRedirect({
     return location == AppRoutes.registerWorkerDocs
         ? null
         : AppRoutes.registerWorkerDocs;
+  }
+
+  // Si el trabajador existe pero no está aprobado → pantalla de espera.
+  if (profile.role == UserRole.worker) {
+    final wp = workerProfile.valueOrNull;
+    if (wp != null && !wp.isApproved) {
+      return location == AppRoutes.workerPending ? null : AppRoutes.workerPending;
+    }
   }
 
   final home = _homeForRole(profile.role);

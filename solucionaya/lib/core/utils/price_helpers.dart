@@ -1,6 +1,26 @@
+import 'package:intl/intl.dart';
+
 import '../../data/models/worker_profile_model.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
+
+/// Formatea un valor entero como precio colombiano.
+/// Ejemplo: 150000 → "$150.000"
+String formatCOP(int amount) {
+  final formatter = NumberFormat.currency(
+    locale: 'es_CO',
+    symbol: '\$',
+    decimalDigits: 0,
+  );
+  return formatter.format(amount);
+}
+
+/// Formatea un rango de precios.
+/// Ejemplo: formatCOPRange(50000, 150000) → "$50.000 – $150.000"
+String formatCOPRange(int min, int? max) {
+  if (max == null || max <= min) return formatCOP(min);
+  return '${formatCOP(min)} – ${formatCOP(max)}';
+}
 
 /// Extensión con propiedades de cada categoría.
 extension ServiceCategoryX on ServiceCategory {
