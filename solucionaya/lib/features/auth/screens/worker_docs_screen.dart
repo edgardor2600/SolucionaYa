@@ -61,12 +61,14 @@ class _WorkerDocsScreenState extends ConsumerState<WorkerDocsScreen> {
         displayName: userModel.displayName,
         category: _selectedCategory!,
         city: userModel.city,
+        latitude: userModel.latitude,
+        longitude: userModel.longitude,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
-        isActive: false, // Inactivo hasta ser aprobado
+        isActive: true, // TODO: Poner en false en prod (Inactivo hasta ser aprobado)
         isAvailableNow: false,
         isVerified: false,
-        isApproved: false,
+        isApproved: true, // TODO: Poner en false en prod
         totalReviews: 0,
         rating: 0.0,
         totalJobsDone: 0,

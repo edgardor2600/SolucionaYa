@@ -8,6 +8,7 @@ import '../../../app/providers/auth_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../data/models/user_model.dart';
+import '../../../data/services/location_service.dart';
 import 'select_role_screen.dart';
 
 class CompleteProfileScreen extends ConsumerStatefulWidget {
@@ -22,6 +23,32 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
   final _nameCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
   bool _isLoading = false;
+  double? _latitude;
+  double? _longitude;
+
+  Future<void> _getLocation() async {
+    setState(() => _isLoading = true);
+    try {
+      final service = LocationService();
+      final result = await service.getCurrentLocationAndCity();
+      setState(() {
+        _cityCtrl.text = result.city;
+        _latitude = result.latitude;
+        _longitude = result.longitude;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -55,6 +82,8 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
         lastActiveAt: DateTime.now(),
         isActive: true,
         fcmTokens: const [],
+        latitude: _latitude,
+        longitude: _longitude,
       );
 
       await userRepo.createUser(userModel);
@@ -180,16 +209,20 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
 
                 TextFormField(
                   controller: _cityCtrl,
-                  textCapitalization: TextCapitalization.words,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _completeProfile(),
+                  readOnly: true,
+                  onTap: _getLocation,
                   style: const TextStyle(fontWeight: FontWeight.w500),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Ciudad donde vives',
-                    prefixIcon: Icon(Icons.location_city_rounded),
+                    prefixIcon: const Icon(Icons.location_on_rounded),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.my_location_rounded, color: AppColors.primary),
+                      onPressed: _getLocation,
+                    ),
+                    hintText: 'Toca para detectar tu ubicación',
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Indica tu ciudad';
+                    if (v == null || v.trim().isEmpty) return 'Por favor detecta tu ubicación';
                     return null;
                   },
                 ).animate().slideY(begin: 0.3, duration: 500.ms, delay: 400.ms).fade(),

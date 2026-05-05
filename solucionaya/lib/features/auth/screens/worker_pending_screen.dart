@@ -25,7 +25,7 @@ class WorkerPendingScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -43,7 +43,7 @@ class WorkerPendingScreen extends ConsumerWidget {
                 ),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 24),
 
               // ── Ilustración animada ──
               Center(
@@ -160,7 +160,7 @@ class WorkerPendingScreen extends ConsumerWidget {
                 delay: 400,
               ),
 
-              const Spacer(),
+              const SizedBox(height: 32),
 
               // ── Estado del stream ──
               workerAsync.when(
