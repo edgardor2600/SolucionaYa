@@ -289,7 +289,7 @@ class _WorkerDashboard extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 // ── Acciones Rápidas ──
-                _QuickActions()
+                _QuickActions(workerUid: worker.uid)
                     .animate()
                     .slideY(begin: 0.2, duration: 500.ms, delay: 300.ms)
                     .fade(),
@@ -707,7 +707,8 @@ class _StatCard extends StatelessWidget {
 
 // ─── Acciones Rápidas ─────────────────────────────────────────────────────────
 class _QuickActions extends StatelessWidget {
-  const _QuickActions();
+  const _QuickActions({required this.workerUid});
+  final String workerUid;
 
   @override
   Widget build(BuildContext context) {
@@ -733,6 +734,12 @@ class _QuickActions extends StatelessWidget {
         color: AppColors.secondary,
         route: AppRoutes.workerGallery,
       ),
+      _Action(
+        icon: Icons.calendar_month_rounded,
+        label: 'Mi horario',
+        color: AppColors.warning,
+        route: AppRoutes.workerSchedule,
+      ),
     ];
 
     return Column(
@@ -754,7 +761,7 @@ class _QuickActions extends StatelessWidget {
                       right: a != actions.last ? 10 : 0,
                     ),
                     child: InkWell(
-                      onTap: () => context.go(a.route),
+                      onTap: () => context.push(a.route),
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -790,6 +797,65 @@ class _QuickActions extends StatelessWidget {
               )
               .toList(),
         ),
+        const SizedBox(height: 24),
+        // Botón de vista previa de perfil
+        InkWell(
+          onTap: () => context.push('/worker/$workerUid'),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.15),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.remove_red_eye_rounded,
+                      color: AppColors.primary),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ver mi perfil público',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      Text(
+                        'Mira cómo te ven los clientes en la app',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded,
+                    color: colorScheme.onSurface.withValues(alpha: 0.3)),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -808,3 +874,4 @@ class _Action {
   final Color color;
   final String route;
 }
+
