@@ -26,7 +26,7 @@ Future<void> main() async {
     final emulatorHost = AppEnvironment.firebaseEmulatorHost;
     try {
       await FirebaseAuth.instance.useAuthEmulator(emulatorHost, 9099);
-      FirebaseFirestore.instance.useFirestoreEmulator(emulatorHost, 8080);
+      FirebaseFirestore.instance.useFirestoreEmulator(emulatorHost, 8088);
       await FirebaseStorage.instance.useStorageEmulator(emulatorHost, 9199);
       // Sembrar categorías en segundo plano para no bloquear el inicio de la app
       FirebaseCategoriesRepository().seedDefaultCategories().catchError((e) {

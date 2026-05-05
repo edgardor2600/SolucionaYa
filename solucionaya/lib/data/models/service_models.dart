@@ -257,3 +257,119 @@ class ReviewModel {
     );
   }
 }
+
+// ─── Horario Semanal ──────────────────────────────────────────────────────────
+
+/// Representa un bloque de tiempo con hora de inicio y fin.
+class TimeSlot {
+  const TimeSlot({required this.startHour, required this.endHour});
+
+  /// Hora de inicio en formato 24h (0-23).
+  final int startHour;
+
+  /// Hora de fin en formato 24h (1-24). endHour > startHour siempre.
+  final int endHour;
+
+  String get startLabel => _formatHour(startHour);
+  String get endLabel => _formatHour(endHour);
+
+  static String _formatHour(int h) {
+    if (h == 0 || h == 24) return '12:00 AM';
+    if (h == 12) return '12:00 PM';
+    return h < 12 ? '$h:00 AM' : '${h - 12}:00 PM';
+  }
+
+  factory TimeSlot.fromJson(Map<String, dynamic> json) => TimeSlot(
+        startHour: (json['startHour'] as num).toInt(),
+        endHour: (json['endHour'] as num).toInt(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'startHour': startHour,
+        'endHour': endHour,
+      };
+
+  @override
+  bool operator ==(Object other) =>
+      other is TimeSlot &&
+      other.startHour == startHour &&
+      other.endHour == endHour;
+
+  @override
+  int get hashCode => Object.hash(startHour, endHour);
+}
+
+/// Horario de disponibilidad semanal de un trabajador.
+/// Se persiste en /workers/{uid}/schedule/weekly (un solo documento).
+class ScheduleModel {
+  const ScheduleModel({
+    required this.days,
+    this.notes,
+    this.updatedAt,
+  });
+
+  /// Mapa día → lista de franjas horarias. Día 1=Lunes … 7=Domingo.
+  final Map<int, List<TimeSlot>> days;
+
+  /// Notas adicionales sobre la disponibilidad (Opcional).
+  final String? notes;
+
+  final DateTime? updatedAt;
+
+  /// Horario vacío por defecto (todos los días sin franjas).
+  factory ScheduleModel.empty() => const ScheduleModel(days: {});
+
+  bool get isEmpty => days.values.every((slots) => slots.isEmpty);
+
+  /// Nombres de los días de la semana (Lun=1 … Dom=7).
+  static const dayNames = {
+    1: 'Lunes',
+    2: 'Martes',
+    3: 'Miércoles',
+    4: 'Jueves',
+    5: 'Viernes',
+    6: 'Sábado',
+    7: 'Domingo',
+  };
+
+  factory ScheduleModel.fromJson(Map<String, dynamic> json) {
+    final rawDays = (json['days'] as Map<String, dynamic>?) ?? {};
+    final Map<int, List<TimeSlot>> parsed = {};
+    for (final entry in rawDays.entries) {
+      final dayIndex = int.tryParse(entry.key);
+      if (dayIndex == null) continue;
+      final slots = (entry.value as List<dynamic>)
+          .map((s) => TimeSlot.fromJson(s as Map<String, dynamic>))
+          .toList();
+      parsed[dayIndex] = slots;
+    }
+    return ScheduleModel(
+      days: parsed,
+      notes: json['notes'] as String?,
+      updatedAt: json['updatedAt'] is Timestamp
+          ? (json['updatedAt'] as Timestamp).toDate()
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'days': {
+          for (final entry in days.entries)
+            entry.key.toString(): entry.value.map((s) => s.toJson()).toList(),
+        },
+        if (notes != null) 'notes': notes,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+  ScheduleModel copyWith({
+    Map<int, List<TimeSlot>>? days,
+    String? notes,
+  }) {
+    return ScheduleModel(
+      days: days ?? this.days,
+      notes: notes ?? this.notes,
+      updatedAt: updatedAt,
+    );
+  }
+}
+

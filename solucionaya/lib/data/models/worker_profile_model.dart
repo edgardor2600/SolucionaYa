@@ -126,6 +126,8 @@ class WorkerProfileModel {
     this.availableSchedule = const {},
     this.tags = const [],
     this.pendingReason,
+    this.latitude,
+    this.longitude,
   });
 
   final String uid;
@@ -153,6 +155,8 @@ class WorkerProfileModel {
   final Map<String, DaySchedule> availableSchedule; // key: "monday", "tuesday"…
   final List<String> tags;
   final String? pendingReason; // por qué está pendiente de aprobación
+  final double? latitude;
+  final double? longitude;
 
   // ── Helpers de UI ────────────────────────────────────────────────
   String get ratingDisplay => rating.toStringAsFixed(1);
@@ -196,6 +200,8 @@ class WorkerProfileModel {
       ),
       tags: List<String>.from(json['tags'] as List? ?? []),
       pendingReason: json['pendingReason'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
     );
   }
 
@@ -228,6 +234,8 @@ class WorkerProfileModel {
       ),
       'tags': tags,
       if (pendingReason != null) 'pendingReason': pendingReason,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
     };
   }
 
@@ -258,6 +266,8 @@ class WorkerProfileModel {
     Map<String, DaySchedule>? availableSchedule,
     List<String>? tags,
     String? pendingReason,
+    double? latitude,
+    double? longitude,
   }) {
     return WorkerProfileModel(
       uid: uid ?? this.uid,
@@ -285,6 +295,8 @@ class WorkerProfileModel {
       availableSchedule: availableSchedule ?? this.availableSchedule,
       tags: tags ?? this.tags,
       pendingReason: pendingReason ?? this.pendingReason,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
     );
   }
 

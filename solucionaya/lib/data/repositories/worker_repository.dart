@@ -45,6 +45,10 @@ abstract class WorkerRepository {
   Future<void> addPhoto(String uid, GalleryPhotoModel photo);
   Future<void> deletePhoto(String uid, String photoId);
   Future<void> reorderPhotos(String uid, List<String> orderedIds);
+
+  /// Horario semanal del trabajador.
+  Future<ScheduleModel> getSchedule(String uid);
+  Future<void> saveSchedule(String uid, ScheduleModel schedule);
 }
 
 /// Excepción personalizada para el repositorio de trabajadores.
@@ -71,6 +75,9 @@ class FirebaseWorkerRepository implements WorkerRepository {
 
   CollectionReference<Map<String, dynamic>> _galleryRef(String uid) =>
       _workersRef.doc(uid).collection('gallery');
+
+  DocumentReference<Map<String, dynamic>> _scheduleRef(String uid) =>
+      _workersRef.doc(uid).collection('schedule').doc('weekly');
 
   @override
   Future<WorkerProfileModel?> getWorkerProfile(String uid) async {
@@ -285,6 +292,26 @@ class FirebaseWorkerRepository implements WorkerRepository {
       await batch.commit();
     } catch (e) {
       throw WorkerRepositoryException('Error al reordenar fotos: $e');
+    }
+  }
+
+  @override
+  Future<ScheduleModel> getSchedule(String uid) async {
+    try {
+      final doc = await _scheduleRef(uid).get();
+      if (!doc.exists || doc.data() == null) return ScheduleModel.empty();
+      return ScheduleModel.fromJson(doc.data()!);
+    } catch (e) {
+      throw WorkerRepositoryException('Error al obtener horario: $e');
+    }
+  }
+
+  @override
+  Future<void> saveSchedule(String uid, ScheduleModel schedule) async {
+    try {
+      await _scheduleRef(uid).set(schedule.toJson(), SetOptions(merge: true));
+    } catch (e) {
+      throw WorkerRepositoryException('Error al guardar horario: $e');
     }
   }
 }

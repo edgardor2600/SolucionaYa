@@ -69,6 +69,22 @@ service cloud.firestore {
             .hasAny(['isVerified', 'isApproved', 'rating', 'totalReviews', 'totalJobsDone'])
         || isAdmin();
       allow delete: if isAdmin();
+
+      // Subcolecciones del trabajador (públicas para leer, solo el dueño puede escribir)
+      match /prices/{priceId} {
+        allow read: if isAuthenticated();
+        allow write: if isOwner(uid) || isAdmin();
+      }
+
+      match /gallery/{photoId} {
+        allow read: if isAuthenticated();
+        allow write: if isOwner(uid) || isAdmin();
+      }
+
+      match /schedule/{docId} {
+        allow read: if isAuthenticated();
+        allow write: if isOwner(uid) || isAdmin();
+      }
     }
 
     // ── /reviews/{reviewId} ──────────────────────────────────────────────────

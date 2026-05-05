@@ -32,6 +32,8 @@ class UserModel {
     this.isSuspended = false,
     this.suspendedReason,
     this.acceptedTermsAt,
+    this.latitude,
+    this.longitude,
   });
 
   final String uid;
@@ -48,6 +50,8 @@ class UserModel {
   final String? suspendedReason;
   final List<String> fcmTokens;
   final DateTime? acceptedTermsAt;
+  final double? latitude;
+  final double? longitude;
 
   // ── Serialización ──────────────────────────────────────────────
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -68,6 +72,8 @@ class UserModel {
       acceptedTermsAt: json['acceptedTermsAt'] != null
           ? _parseDate(json['acceptedTermsAt'])
           : null,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
     );
   }
 
@@ -88,6 +94,8 @@ class UserModel {
       'fcmTokens': fcmTokens,
       if (acceptedTermsAt != null)
         'acceptedTermsAt': Timestamp.fromDate(acceptedTermsAt!),
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
     };
   }
 
@@ -106,6 +114,8 @@ class UserModel {
     String? suspendedReason,
     List<String>? fcmTokens,
     DateTime? acceptedTermsAt,
+    double? latitude,
+    double? longitude,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -122,6 +132,8 @@ class UserModel {
       suspendedReason: suspendedReason ?? this.suspendedReason,
       fcmTokens: fcmTokens ?? this.fcmTokens,
       acceptedTermsAt: acceptedTermsAt ?? this.acceptedTermsAt,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
     );
   }
 

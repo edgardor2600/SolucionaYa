@@ -29,6 +29,7 @@ class AppRoutes {
   static const workerEditProfile = '/worker/edit-profile';
   static const workerPrices = '/worker/prices';
   static const workerGallery = '/worker/gallery';
+  static const workerSchedule = '/worker/schedule';
 
   // ── Compartidas ─────────────────────────────────────────────────
   static const workerProfileDetail = '/worker/:workerId';

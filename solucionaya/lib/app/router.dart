@@ -25,6 +25,8 @@ import '../features/worker_profile/screens/worker_prices_screen.dart';
 import '../features/shell/client_shell.dart';
 import '../features/shell/worker_shell.dart';
 import '../features/worker_profile/screens/worker_profile_detail_screen.dart';
+import '../features/worker_profile/screens/worker_gallery_screen.dart';
+import '../features/worker_profile/screens/worker_schedule_screen.dart';
 import 'providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -135,7 +137,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.workerGallery,
-        builder: (_, __) => const _PlaceholderScreen(label: 'Mi galería'),
+        builder: (_, __) => const WorkerGalleryScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.workerSchedule,
+        builder: (_, __) => const WorkerScheduleScreen(),
       ),
       GoRoute(
         path: AppRoutes.workerProfileDetail,
@@ -273,6 +279,7 @@ bool _isWorkerPrivateRoute(String location) {
       location == AppRoutes.workerEditProfile ||
       location == AppRoutes.workerPrices ||
       location == AppRoutes.workerGallery ||
+      location == AppRoutes.workerSchedule ||
       location == AppRoutes.workerPending;
 }
 
