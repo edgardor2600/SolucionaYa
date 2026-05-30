@@ -213,11 +213,14 @@ final workerPublicProfileProvider = FutureProvider.autoDispose
     .family<WorkerPublicProfileData, String>((ref, uid) async {
   
   // Ejecutamos las 4 consultas en paralelo para mayor rapidez
+  // El horario usa catchError por si el documento aún no existe en Firestore
   final results = await Future.wait([
     ref.watch(workerProfileOnceProvider(uid).future),
     ref.watch(workerPricesProvider(uid).future),
     ref.watch(workerGalleryProvider(uid).future),
-    ref.watch(workerScheduleProvider(uid).future),
+    ref
+        .watch(workerScheduleProvider(uid).future)
+        .catchError((_) => ScheduleModel.empty()),
   ]);
 
   final profile = results[0] as WorkerProfileModel?;

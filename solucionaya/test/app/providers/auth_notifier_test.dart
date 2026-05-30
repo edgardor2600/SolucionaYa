@@ -23,23 +23,18 @@ void main() {
       expect(notifier.error, isNull);
     });
 
-    test('crea perfil cliente al registrar con email', () async {
+    test('registra usuario con email exitosamente', () async {
       final authRepo = _FakeAuthRepository();
       final userRepo = _FakeUserRepository();
       final notifier = AuthNotifier(authRepo: authRepo, userRepo: userRepo);
 
-      final success = await notifier.registerClientWithEmail(
+      final success = await notifier.registerWithEmail(
         email: 'ana@test.com',
         password: '12345678',
-        displayName: 'Ana Gomez',
-        phone: '3001234567',
-        city: 'Bucaramanga',
       );
 
       expect(success, isTrue);
-      expect(userRepo.createdUsers, hasLength(1));
-      expect(userRepo.createdUsers.single.email, 'ana@test.com');
-      expect(userRepo.createdUsers.single.role, UserRole.client);
+      expect(authRepo.registerCalled, isTrue);
     });
 
     test('elimina perfil y cuenta actual', () async {
@@ -59,6 +54,7 @@ void main() {
 class _FakeAuthRepository implements AuthRepository {
   String nextVerificationId = 'default-verification-id';
   bool deleteCalled = false;
+  bool registerCalled = false;
 
   @override
   Stream<User?> get authStateChanges => const Stream<User?>.empty();
@@ -76,6 +72,7 @@ class _FakeAuthRepository implements AuthRepository {
     String email,
     String password,
   ) async {
+    registerCalled = true;
     return _FakeUserCredential(_FakeUser());
   }
 

@@ -59,14 +59,16 @@ class ClientHomeScreen extends ConsumerWidget {
                 _buildQuickActions(context),
                 const SizedBox(height: 28),
                 _buildSectionTitle(context, 'Categorías', onTap: () {
-                  // TODO: Ir a Explore
+                  context.push(AppRoutes.clientExplore);
                 }),
                 const SizedBox(height: 16),
                 _buildCategoriesGrid(context),
                 const SizedBox(height: 28),
 
                 // Disponibles Ahora
-                _buildSectionTitle(context, 'Disponibles ahora', onTap: () {}),
+                _buildSectionTitle(context, 'Disponibles ahora', onTap: () {
+                  context.push(AppRoutes.clientExplore); // TODO: Pasar filter para "Available Now"
+                }),
                 const SizedBox(height: 16),
                 _buildWorkersCarousel(
                   context,
@@ -77,7 +79,9 @@ class ClientHomeScreen extends ConsumerWidget {
                 const SizedBox(height: 28),
 
                 // Más cercanos
-                _buildSectionTitle(context, 'Más cercanos a ti', onTap: () {}),
+                _buildSectionTitle(context, 'Más cercanos a ti', onTap: () {
+                  context.push(AppRoutes.clientExplore);
+                }),
                 const SizedBox(height: 16),
                 _buildWorkersCarousel(
                   context,
@@ -377,7 +381,10 @@ class ClientHomeScreen extends ConsumerWidget {
       itemBuilder: (context, i) {
         final cat = categories[i];
         return GestureDetector(
-          onTap: () {},
+          onTap: () {
+            // Pasamos la categoría como extra (objeto enum) para que se pre-filtre en Explorar
+            context.push(AppRoutes.clientExplore, extra: cat);
+          },
           child: Column(
             children: [
               Expanded(

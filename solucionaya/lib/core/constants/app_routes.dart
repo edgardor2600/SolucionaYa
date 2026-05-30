@@ -3,6 +3,9 @@
 class AppRoutes {
   AppRoutes._();
 
+  // Explorer
+  static const explore = '/explore';
+
   // ── Auth ────────────────────────────────────────────────────────
   static const splash = '/';
   static const onboarding = '/onboarding';

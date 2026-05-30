@@ -16,8 +16,8 @@ import '../features/auth/screens/complete_profile_screen.dart';
 import '../features/auth/screens/worker_docs_screen.dart';
 import '../features/auth/screens/worker_pending_screen.dart';
 import '../features/auth/screens/onboarding_screen.dart';
-import '../features/explore/screens/explore_screen.dart';
-import '../data/models/category_model.dart';
+import '../features/explore/presentation/screens/explore_screen.dart';
+// category_model.dart import removed — using ServiceCategory enum directly
 import '../features/home/screens/client_home_screen.dart';
 import '../features/home/screens/worker_home_screen.dart';
 import '../features/worker_profile/screens/worker_edit_profile_screen.dart';
@@ -92,7 +92,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRoutes.clientExplore,
             builder: (_, state) => ExploreScreen(
-              initialCategory: state.extra as CategoryModel?,
+              initialCategory: state.extra is ServiceCategory
+                  ? state.extra as ServiceCategory
+                  : null,
             ),
           ),
           GoRoute(
