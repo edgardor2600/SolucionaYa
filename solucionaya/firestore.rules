@@ -21,7 +21,8 @@ service cloud.firestore {
 
     /// Lee el rol del usuario desde Firestore (campo 'role').
     function getUserRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      let path = /databases/$(database)/documents/users/$(request.auth.uid);
+      return exists(path) ? get(path).data.role : 'client';
     }
 
     /// ¿Es administrador?
@@ -40,10 +41,10 @@ service cloud.firestore {
     }
 
     // ── /users/{uid} ─────────────────────────────────────────────────────────
-    // Un usuario solo puede leer/editar su propio perfil.
-    // Admins pueden leer cualquier perfil.
+    // Cualquier usuario autenticado puede leer perfiles (para ver nombres/fotos en chats y búsquedas).
+    // Un usuario solo puede editar su propio perfil.
     match /users/{uid} {
-      allow read: if isOwner(uid) || isAdmin();
+      allow read: if isAuthenticated();
       allow create: if isOwner(uid)
         && request.resource.data.keys().hasAll(['uid','role','displayName','phone','city','createdAt','lastActiveAt','isActive','fcmTokens'])
         && request.resource.data.role in ['client', 'worker'];
@@ -104,15 +105,22 @@ service cloud.firestore {
 
     // ── /chats/{chatId} ──────────────────────────────────────────────────────
     match /chats/{chatId} {
-      allow read, write: if isAuthenticated()
-        && (request.auth.uid == resource.data.clientId
-            || request.auth.uid == resource.data.workerId);
+      allow read: if isAuthenticated()
+        && (request.auth.uid == resource.data.clientUid
+            || request.auth.uid == resource.data.workerUid);
+      allow create: if isAuthenticated()
+        && (request.auth.uid == request.resource.data.clientUid
+            || request.auth.uid == request.resource.data.workerUid);
+      allow update: if isAuthenticated()
+        && (request.auth.uid == resource.data.clientUid
+            || request.auth.uid == resource.data.workerUid);
+      allow delete: if isAdmin();
 
       // Mensajes dentro del chat
       match /messages/{messageId} {
         allow read: if isAuthenticated()
-          && (request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.clientId
-              || request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.workerId);
+          && (request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.clientUid
+              || request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.workerUid);
         allow create: if isAuthenticated()
           && request.resource.data.senderUid == request.auth.uid;
         allow update, delete: if false; // Los mensajes son inmutables
@@ -132,6 +140,17 @@ service cloud.firestore {
     // En desarrollo permitimos escritura para la siembra automática.
     match /categories/{categoryId} {
       allow read, write: if true;
+    }
+
+    // ── /favorites/{userId}/items/{workerId} ─────────────────────────────────
+    // Los favoritos son privados de cada cliente.
+    // Solo el dueño de los favoritos puede leerlos o modificarlos.
+    match /favorites/{userId} {
+      allow read: if isOwner(userId);
+      
+      match /items/{workerId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // ── Regla de cierre: bloquear todo lo no declarado ───────────────────────

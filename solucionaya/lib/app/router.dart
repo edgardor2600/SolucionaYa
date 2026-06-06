@@ -19,6 +19,7 @@ import '../features/auth/screens/onboarding_screen.dart';
 import '../features/explore/presentation/screens/explore_screen.dart';
 // category_model.dart import removed — using ServiceCategory enum directly
 import '../features/home/screens/client_home_screen.dart';
+import '../features/home/screens/client_profile_screen.dart';
 import '../features/home/screens/worker_home_screen.dart';
 import '../features/worker_profile/screens/worker_edit_profile_screen.dart';
 import '../features/worker_profile/screens/worker_prices_screen.dart';
@@ -27,6 +28,8 @@ import '../features/shell/worker_shell.dart';
 import '../features/worker_profile/screens/worker_profile_detail_screen.dart';
 import '../features/worker_profile/screens/worker_gallery_screen.dart';
 import '../features/worker_profile/screens/worker_schedule_screen.dart';
+import '../features/chat/presentation/screens/chat_list_screen.dart';
+import '../features/chat/presentation/screens/chat_detail_screen.dart';
 import 'providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -99,11 +102,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.clientChats,
-            builder: (_, __) => const _PlaceholderScreen(label: 'Chats'),
+            builder: (_, __) => const ChatListScreen(),
           ),
           GoRoute(
             path: AppRoutes.clientProfile,
-            builder: (_, __) => const _PlaceholderScreen(label: 'Mi perfil'),
+            builder: (_, __) => const ClientProfileScreen(),
           ),
         ],
       ),
@@ -120,7 +123,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.workerChats,
-            builder: (_, __) => const _PlaceholderScreen(label: 'Mensajes'),
+            builder: (_, __) => const ChatListScreen(),
           ),
           GoRoute(
             path: AppRoutes.workerStats,
@@ -150,6 +153,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder:
             (_, state) => WorkerProfileDetailScreen(
               workerId: state.pathParameters['workerId'] ?? '',
+            ),
+      ),
+      GoRoute(
+        path: AppRoutes.chatDetail,
+        builder:
+            (_, state) => ChatDetailScreen(
+              chatId: state.pathParameters['chatId'] ?? '',
             ),
       ),
       GoRoute(
