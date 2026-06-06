@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import '../../../app/providers/auth_provider.dart';
 import '../../../app/providers/workers_provider.dart';
 import '../../../data/models/worker_profile_model.dart';
+import '../../../data/services/location_service.dart';
 import '../domain/explore_filter_model.dart';
 
 // Estado para almacenar los filtros activos
@@ -113,8 +114,9 @@ class ExploreNotifier extends StateNotifier<ExploreState> {
       }
 
       // 2. Filtro de Distancia
-      double? clientLat = clientProfile?.latitude;
-      double? clientLng = clientProfile?.longitude;
+      final currentPosition = ref.read(userLocationProvider).value;
+      double? clientLat = currentPosition?.latitude ?? clientProfile?.latitude;
+      double? clientLng = currentPosition?.longitude ?? clientProfile?.longitude;
       
       if (filters.maxDistanceKm != null && clientLat != null && clientLng != null) {
         filteredWorkers = filteredWorkers.where((w) {

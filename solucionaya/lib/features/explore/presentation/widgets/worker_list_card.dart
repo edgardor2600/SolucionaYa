@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/providers/auth_provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/worker_profile_model.dart';
+import '../../../../data/services/location_service.dart';
 
 class WorkerListCard extends ConsumerWidget {
   const WorkerListCard({super.key, required this.worker});
@@ -19,13 +20,14 @@ class WorkerListCard extends ConsumerWidget {
     return formatter.format(amount);
   }
 
-  String? _getDistanceText(double? clientLat, double? clientLng) {
+  String? _getDistanceText(double? clientLat, double? clientLng, bool isPermissionDenied) {
     if (clientLat != null && clientLng != null && worker.latitude != null && worker.longitude != null) {
       final distanceInMeters = Geolocator.distanceBetween(clientLat, clientLng, worker.latitude!, worker.longitude!);
       final distanceInKm = distanceInMeters / 1000;
       if (distanceInKm < 1) return 'A ${distanceInMeters.toStringAsFixed(0)} m';
       return 'A ${distanceInKm.toStringAsFixed(1)} km';
     }
+    if (isPermissionDenied) return 'A ? km';
     return null;
   }
 
@@ -34,7 +36,14 @@ class WorkerListCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final accentColor = worker.category.color;
     final clientProfile = ref.watch(currentUserProfileProvider).value;
-    final distanceText = _getDistanceText(clientProfile?.latitude, clientProfile?.longitude);
+    final userPositionAsync = ref.watch(userLocationProvider);
+    final currentPosition = userPositionAsync.value;
+
+    final lat = currentPosition?.latitude ?? clientProfile?.latitude;
+    final lng = currentPosition?.longitude ?? clientProfile?.longitude;
+
+    final isPermissionDenied = userPositionAsync.hasValue && currentPosition == null && clientProfile?.latitude == null;
+    final distanceText = _getDistanceText(lat, lng, isPermissionDenied);
 
     return GestureDetector(
       onTap: () => context.push('/worker/${worker.uid}'),

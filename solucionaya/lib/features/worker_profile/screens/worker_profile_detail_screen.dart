@@ -3,11 +3,18 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/providers/workers_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/service_models.dart';
 import '../../../data/models/worker_profile_model.dart';
+import '../../../app/providers/auth_provider.dart';
+import '../../favorites/favorites_repository.dart';
+import '../../../data/services/location_service.dart';
+import 'package:geolocator/geolocator.dart';
+import '../../../core/constants/app_routes.dart';
+import '../../chat/presentation/providers/chat_providers.dart';
 
 String _formatCOP(double amount) {
   final formatter = NumberFormat.currency(
@@ -67,14 +74,37 @@ class _WorkerProfileDetailScreenState
         final gallery = data.gallery;
         final schedule = data.schedule;
 
+        final isFavorite = ref.watch(isWorkerFavoriteProvider(widget.workerId)).value ?? false;
         final primaryColor = profile.category.color;
+
+        final clientProfile = ref.watch(currentUserProfileProvider).value;
+        final userPositionAsync = ref.watch(userLocationProvider);
+        final currentPosition = userPositionAsync.value;
+
+        final lat = currentPosition?.latitude ?? clientProfile?.latitude;
+        final lng = currentPosition?.longitude ?? clientProfile?.longitude;
+
+        final isPermissionDenied = userPositionAsync.hasValue && currentPosition == null && clientProfile?.latitude == null;
+
+        String? distanceText;
+        if (lat != null && lng != null && profile.latitude != null && profile.longitude != null) {
+          final distanceInMeters = Geolocator.distanceBetween(lat, lng, profile.latitude!, profile.longitude!);
+          final distanceInKm = distanceInMeters / 1000;
+          if (distanceInKm < 1) {
+            distanceText = '${distanceInMeters.toStringAsFixed(0)} m';
+          } else {
+            distanceText = '${distanceInKm.toStringAsFixed(1)} km';
+          }
+        } else if (isPermissionDenied) {
+          distanceText = '? km';
+        }
 
         return Scaffold(
           backgroundColor: theme.colorScheme.surface,
           body: NestedScrollView(
             headerSliverBuilder: (context, _) => [
-              _buildHeroAppBar(context, profile, primaryColor),
-              _buildProfileHeader(context, profile, primaryColor),
+              _buildHeroAppBar(context, profile, primaryColor, isFavorite),
+              _buildProfileHeader(context, profile, primaryColor, distanceText),
               _buildTabBar(context, primaryColor),
             ],
             body: TabBarView(
@@ -105,7 +135,7 @@ class _WorkerProfileDetailScreenState
 
   // ─── Hero App Bar ──────────────────────────────────────────────────────────
 
-  Widget _buildHeroAppBar(BuildContext context, WorkerProfileModel profile, Color primaryColor) {
+  Widget _buildHeroAppBar(BuildContext context, WorkerProfileModel profile, Color primaryColor, bool isFavorite) {
     return SliverAppBar(
       expandedHeight: 220,
       pinned: true,
@@ -128,8 +158,37 @@ class _WorkerProfileDetailScreenState
           child: CircleAvatar(
             backgroundColor: Colors.black.withValues(alpha: 0.3),
             child: IconButton(
-              icon: const Icon(Icons.favorite_border_rounded, color: Colors.white, size: 20),
-              onPressed: () {},
+              icon: Icon(
+                isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                color: isFavorite ? Colors.redAccent : Colors.white,
+                size: 20,
+              ),
+              onPressed: () async {
+                final authState = ref.read(authStateProvider).value;
+                if (authState == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Inicia sesión para guardar favoritos')),
+                  );
+                  return;
+                }
+                await ref.read(favoritesRepositoryProvider).toggleFavorite(
+                      authState.uid,
+                      profile.uid,
+                      !isFavorite,
+                    );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isFavorite
+                            ? 'Eliminado de favoritos'
+                            : 'Agregado a favoritos',
+                      ),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                }
+              },
             ),
           ),
         ),
@@ -201,7 +260,7 @@ class _WorkerProfileDetailScreenState
 
   // ─── Profile Header Card ───────────────────────────────────────────────────
 
-  Widget _buildProfileHeader(BuildContext context, WorkerProfileModel profile, Color primaryColor) {
+  Widget _buildProfileHeader(BuildContext context, WorkerProfileModel profile, Color primaryColor, String? distanceText) {
     final theme = Theme.of(context);
     return SliverToBoxAdapter(
       child: Container(
@@ -298,7 +357,9 @@ class _WorkerProfileDetailScreenState
             ),
             const SizedBox(height: 16),
             // Stats row
-            Row(
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
               children: [
                 _StatChip(
                   icon: Icons.star_rounded,
@@ -306,20 +367,25 @@ class _WorkerProfileDetailScreenState
                   value: profile.rating.toStringAsFixed(1),
                   label: '${profile.totalReviews} reseñas',
                 ),
-                const SizedBox(width: 12),
                 _StatChip(
                   icon: Icons.work_outline_rounded,
                   iconColor: primaryColor,
                   value: '${profile.totalJobsDone}',
                   label: 'trabajos',
                 ),
-                const SizedBox(width: 12),
                 _StatChip(
                   icon: Icons.schedule_rounded,
                   iconColor: primaryColor,
                   value: profile.yearsExperience.toString(),
                   label: 'años exp',
                 ),
+                if (distanceText != null)
+                  _StatChip(
+                    icon: Icons.location_on_rounded,
+                    iconColor: primaryColor,
+                    value: distanceText,
+                    label: 'de ti',
+                  ),
               ],
             ),
             const SizedBox(height: 16),
@@ -403,7 +469,58 @@ class _WorkerProfileDetailScreenState
           Expanded(
             flex: 2,
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () async {
+                final currentUser = ref.read(currentUserProfileProvider).value;
+                if (currentUser == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Debes iniciar sesión para contactar al experto')),
+                  );
+                  return;
+                }
+
+                if (currentUser.uid == profile.uid) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('No puedes contactarte a ti mismo')),
+                  );
+                  return;
+                }
+
+                try {
+                  // Mostrar indicador de carga circular
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+
+                  final chatRepo = ref.read(chatRepositoryProvider);
+                  final chat = await chatRepo.createOrGetChat(
+                    clientUid: currentUser.uid,
+                    workerUid: profile.uid,
+                    category: profile.category.name,
+                  );
+
+                  if (context.mounted) {
+                    final navigator = Navigator.of(context, rootNavigator: true);
+                    if (navigator.canPop()) {
+                      navigator.pop();
+                    }
+                    context.push(AppRoutes.chat(chat.chatId));
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    final navigator = Navigator.of(context, rootNavigator: true);
+                    if (navigator.canPop()) {
+                      navigator.pop();
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error al contactar: $e')),
+                    );
+                  }
+                }
+              },
               icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18, color: Colors.white),
               label: const Text('Contactar ahora', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
