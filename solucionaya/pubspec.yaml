@@ -38,7 +38,7 @@ dependencies:
 
   # ── Chat ─────────────────────────────────────────────────
   flutter_chat_ui: ^2.0.0
-  flutter_chat_types: ^3.6.2
+  flutter_chat_core: ^2.8.0
   image_picker: ^1.1.2
 
   # ── Mapas y Ubicación ─────────────────────────────────────

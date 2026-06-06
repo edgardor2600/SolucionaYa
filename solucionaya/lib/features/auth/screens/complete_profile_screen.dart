@@ -9,6 +9,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_routes.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/services/location_service.dart';
+import 'package:geolocator/geolocator.dart' show Geolocator;
+import 'package:geocoding/geocoding.dart' show locationFromAddress, placemarkFromCoordinates;
 import 'select_role_screen.dart';
 
 class CompleteProfileScreen extends ConsumerStatefulWidget {
@@ -31,11 +33,105 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
     try {
       final service = LocationService();
       final result = await service.getCurrentLocationAndCity();
+      if (!mounted) return;
       setState(() {
         _cityCtrl.text = result.city;
         _latitude = result.latitude;
         _longitude = result.longitude;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('📍 Ubicación detectada: ${result.city}'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on GpsPermissionPermanentlyDeniedException catch (e) {
+      if (!mounted) return;
+      // El permiso fue denegado permanentemente → guiar al usuario a los ajustes del sistema
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.location_off_rounded, color: AppColors.error),
+              SizedBox(width: 10),
+              Text('Permiso requerido'),
+            ],
+          ),
+          content: Text(e.message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.settings_rounded, size: 18),
+              label: const Text('Abrir Ajustes'),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await Geolocator.openAppSettings();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+      );
+    } on GpsServiceDisabledException catch (e) {
+      if (!mounted) return;
+      // El GPS está apagado → guiar al usuario a activarlo
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.gps_off_rounded, color: AppColors.warning),
+              SizedBox(width: 10),
+              Text('GPS desactivado'),
+            ],
+          ),
+          content: Text(e.message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.location_on_rounded, size: 18),
+              label: const Text('Activar GPS'),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await Geolocator.openLocationSettings();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+      );
+    } on GpsPermissionDeniedException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppColors.warning,
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'Reintentar',
+            textColor: Colors.white,
+            onPressed: _getLocation,
+          ),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -68,6 +164,43 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
 
       final userRepo = ref.read(userRepositoryProvider);
       
+      // Si la ubicación es editada manualmente o las coordenadas son nulas, intentar resolverlas
+      if (_latitude == null || _longitude == null) {
+        try {
+          final query = _cityCtrl.text.trim();
+          if (query.isNotEmpty) {
+            final locations = await locationFromAddress(query);
+            if (locations.isNotEmpty) {
+              _latitude = locations.first.latitude;
+              _longitude = locations.first.longitude;
+              debugPrint('Geocodificado manual exitoso: $query -> $_latitude, $_longitude');
+            }
+          }
+        } catch (e) {
+          debugPrint('No se pudo geocodificar la dirección manual ($e). Usando Bucaramanga por defecto.');
+          // Fallback a coordenadas de Bucaramanga
+          _latitude = 7.1139;
+          _longitude = -73.1198;
+        }
+      }
+
+      // Obtener dirección física aproximada detallada para registrar como 'Casa' por defecto
+      String streetAddress = 'Calle Principal, ${_cityCtrl.text.trim()}';
+      if (_latitude != null && _longitude != null) {
+        try {
+          final placemarks = await placemarkFromCoordinates(_latitude!, _longitude!);
+          if (placemarks.isNotEmpty) {
+            final p = placemarks.first;
+            final street = p.thoroughfare?.isNotEmpty == true ? p.thoroughfare! : 'Calle';
+            final number = p.subThoroughfare?.isNotEmpty == true ? ' #${p.subThoroughfare!}' : '';
+            final cityStr = p.locality?.isNotEmpty == true ? p.locality! : _cityCtrl.text.trim();
+            streetAddress = '$street$number, $cityStr';
+          }
+        } catch (e) {
+          debugPrint('No se pudo resolver la calle detallada ($e). Usando calle aproximada.');
+        }
+      }
+
       // Recuperar el rol que el usuario seleccionó antes. Por defecto: cliente.
       final role = ref.read(intendedRoleProvider) ?? UserRole.client;
 
@@ -84,6 +217,9 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
         fcmTokens: const [],
         latitude: _latitude,
         longitude: _longitude,
+        savedAddresses: [
+          {'type': 'Casa', 'address': streetAddress},
+        ],
       );
 
       await userRepo.createUser(userModel);
@@ -209,8 +345,8 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
 
                 TextFormField(
                   controller: _cityCtrl,
-                  readOnly: true,
-                  onTap: _getLocation,
+                  readOnly: false, // Permitir escribir manualmente si falla el GPS
+                  textCapitalization: TextCapitalization.words,
                   style: const TextStyle(fontWeight: FontWeight.w500),
                   decoration: InputDecoration(
                     labelText: 'Ciudad donde vives',
@@ -218,11 +354,12 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen> {
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.my_location_rounded, color: AppColors.primary),
                       onPressed: _getLocation,
+                      tooltip: 'Detectar por GPS',
                     ),
-                    hintText: 'Toca para detectar tu ubicación',
+                    hintText: 'Escribe tu ciudad o toca el icono para detectar',
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Por favor detecta tu ubicación';
+                    if (v == null || v.trim().isEmpty) return 'Por favor escribe o detecta tu ubicación';
                     return null;
                   },
                 ).animate().slideY(begin: 0.3, duration: 500.ms, delay: 400.ms).fade(),

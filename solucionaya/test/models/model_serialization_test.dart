@@ -23,6 +23,9 @@ void main() {
         lastActiveAt: now,
         isActive: true,
         fcmTokens: const ['token-1'],
+        savedAddresses: const [
+          {'type': 'Casa', 'address': 'Calle 36 # 12-34, Bucaramanga'},
+        ],
       );
 
       final json = model.toJson();
@@ -32,6 +35,8 @@ void main() {
       expect(parsed.role, model.role);
       expect(parsed.displayName, model.displayName);
       expect(parsed.fcmTokens, model.fcmTokens);
+      expect(parsed.savedAddresses, isNotEmpty);
+      expect(parsed.savedAddresses.first['type'], 'Casa');
     });
   });
 

@@ -131,7 +131,7 @@ class ClientHomeScreen extends ConsumerWidget {
               Icon(Icons.location_on_rounded, size: 14, color: theme.colorScheme.primary),
               const SizedBox(width: 3),
               Text(
-                'Bucaramanga',
+                ref.watch(currentUserProfileProvider).value?.city ?? 'Bucaramanga',
                 style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
               Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: theme.colorScheme.onSurfaceVariant),

@@ -34,6 +34,7 @@ class UserModel {
     this.acceptedTermsAt,
     this.latitude,
     this.longitude,
+    this.savedAddresses = const [],
   });
 
   final String uid;
@@ -52,6 +53,7 @@ class UserModel {
   final DateTime? acceptedTermsAt;
   final double? latitude;
   final double? longitude;
+  final List<Map<String, String>> savedAddresses;
 
   // ── Serialización ──────────────────────────────────────────────
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -74,6 +76,9 @@ class UserModel {
           : null,
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
+      savedAddresses: (json['savedAddresses'] as List? ?? [])
+          .map((x) => Map<String, String>.from(x as Map))
+          .toList(),
     );
   }
 
@@ -96,6 +101,7 @@ class UserModel {
         'acceptedTermsAt': Timestamp.fromDate(acceptedTermsAt!),
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
+      'savedAddresses': savedAddresses,
     };
   }
 
@@ -116,6 +122,7 @@ class UserModel {
     DateTime? acceptedTermsAt,
     double? latitude,
     double? longitude,
+    List<Map<String, String>>? savedAddresses,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -134,6 +141,7 @@ class UserModel {
       acceptedTermsAt: acceptedTermsAt ?? this.acceptedTermsAt,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      savedAddresses: savedAddresses ?? this.savedAddresses,
     );
   }
 
